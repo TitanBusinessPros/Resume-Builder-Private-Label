@@ -8,10 +8,16 @@
   <style>
     @media print {
       #formPane, #toolbar, #footerNote { display: none !important; }
-      #resumeRoot { max-width: none !important; }
+      #resumeRoot { max-width: 100% !important; word-wrap: break-word; overflow-wrap: break-word; }
     }
     .accent { color: var(--accent-color, #0f172a); }
     .accent-border { border-color: var(--accent-color, #0f172a); }
+    /* Fix for live preview overflow */
+    #resumeRoot {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      max-width: 100%;
+    }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans">
@@ -121,7 +127,7 @@
           <p class="mt-1 text-sm text-slate-600">${[email, phone, location].filter(Boolean).map(escapeHTML).join(' · ')}</p>
         </header>`;
 
-      const summaryHTML = summary ? `<section class="mt-6"><h2 class="text-lg font-semibold accent-border border-b pb-1 accent">Summary</h2><p>${escapeHTML(summary)}</p></section>` : '';
+      const summaryHTML = summary ? `<section class="mt-6"><h2 class="text-lg font-semibold accent-border border-b pb-1 accent">Summary</h2><p class="whitespace-pre-wrap">${escapeHTML(summary)}</p></section>` : '';
 
       // Skills - max 15, horizontal list
       let skillsHTML = '';
