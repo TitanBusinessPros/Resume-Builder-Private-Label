@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simple Resume Builder</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media print {
+      #formPane, #toolbar, #footerNote { display: none !important; }
+      #resumeRoot { max-width: none !important; }
+    }
+    .accent { color: var(--accent-color, #0f172a); }
+    .accent-border { border-color: var(--accent-color, #0f172a); }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+
+  <!-- Toolbar -->
+  <header id="toolbar" class="sticky top-0 z-50 border-b bg-white/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
+      <h1 class="text-lg font-semibold">Resume Builder</h1>
+      <button id="btnPrint" class="rounded-xl bg-slate-900 text-white px-3 py-1.5 hover:bg-slate-800">Print / Save PDF</button>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl p-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Form Pane -->
+    <section id="formPane" class="bg-white border rounded-2xl shadow-sm p-4">
+      <h2 class="text-lg font-semibold mb-3">Fill Your Info</h2>
+      <div class="space-y-6">
+        <!-- Basics -->
+        <div>
+          <h3 class="font-medium mb-2">Basics</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <input id="name" class="input" placeholder="Full name" />
+            <input id="title" class="input" placeholder="Headline (e.g., Software Engineer)" />
+            <input id="email" class="input" placeholder="Email" />
+            <input id="phone" class="input" placeholder="Phone" />
+            <input id="location" class="input md:col-span-2" placeholder="Location" />
+          </div>
+          <div class="mt-3">
+            <label class="block text-sm font-medium mb-1">Profile Photo</label>
+            <input type="file" id="photo" accept="image/*" class="input" />
+          </div>
+        </div>
+
+        <!-- Summary -->
+        <div>
+          <h3 class="font-medium mb-2">Summary</h3>
+          <textarea id="summary" class="input min-h-[80px]" placeholder="Brief summary"></textarea>
+        </div>
+
+        <!-- Skills -->
+        <div>
+          <h3 class="font-medium mb-2">Skills</h3>
+          <p class="text-xs text-slate-500 mb-1">Enter up to 15 skills, separated by commas.</p>
+          <textarea id="skills" class="input min-h-[60px]" placeholder="e.g., JavaScript, Python, React, SQL"></textarea>
+        </div>
+
+        <!-- Experience -->
+        <div>
+          <h3 class="font-medium mb-2">Experience</h3>
+          <p class="text-xs text-slate-500 mb-1">Press <strong>Enter</strong> after each job to create a new entry.</p>
+          <textarea id="experience" class="input min-h-[120px]" placeholder="One job per line: Role at Company (Dates) - Achievements"></textarea>
+        </div>
+
+        <!-- Education -->
+        <div>
+          <h3 class="font-medium mb-2">Education</h3>
+          <p class="text-xs text-slate-500 mb-1">Press <strong>Enter</strong> after each school to create a new entry.</p>
+          <textarea id="education" class="input min-h-[100px]" placeholder="One entry per line: Degree, School (Dates)"></textarea>
+        </div>
+
+        <!-- Accent Color -->
+        <div>
+          <h3 class="font-medium mb-2">Accent Color</h3>
+          <input type="color" id="accentColor" value="#0f172a" class="h-10 w-20 p-1 border rounded-xl" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Preview Pane -->
+    <section class="bg-white border rounded-2xl shadow-sm p-6">
+      <div id="resumeRoot" class="prose max-w-none"></div>
+    </section>
+  </main>
+
+  <footer id="footerNote" class="mx-auto max-w-5xl px-4 pb-8 text-center text-xs text-slate-500">
+    Tip: Fill in the fields and watch your resume preview update live.
+  </footer>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    const state = {
+      name: '', title: '', email: '', phone: '', location: '',
+      summary: '', skills: '', experience: '', education: '', photo: ''
+    };
+
+    function escapeHTML(str = '') {
+      return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]));
+    }
+
+    function render() {
+      const { name, title, email, phone, location, summary, skills, experience, education, photo } = state;
+
+      const headerPhoto = photo ? `<img src="${photo}" alt="Profile photo" class="mx-auto w-28 h-28 rounded-full object-cover mb-3" />` : '';
+
+      const header = `
+        <header class="text-center">
+          ${headerPhoto}
+          <h1 class="text-3xl font-bold accent">${escapeHTML(name || 'Your Name')}</h1>
+          <p class="mt-1">${escapeHTML(title)}</p>
+          <p class="mt-1 text-sm text-slate-600">${[email, phone, location].filter(Boolean).map(escapeHTML).join(' · ')}</p>
+        </header>`;
+
+      const summaryHTML = summary ? `<section class="mt-6"><h2 class="text-lg font-semibold accent-border border-b pb-1 accent">Summary</h2><p>${escapeHTML(summary)}</p></section>` : '';
+
+      // Skills - max 15, horizontal list
+      let skillsHTML = '';
+      if (skills) {
+        const skillList = skills.split(',').map(s => s.trim()).filter(Boolean).slice(0, 15);
+        if (skillList.length) {
+          skillsHTML = `<section class="mt-6"><h2 class="text-lg font-semibold accent-border border-b pb-1 accent">Skills</h2>
+            <ul class="flex flex-wrap gap-x-6 gap-y-2 mt-2 list-disc list-inside">
+              ${skillList.map(s => `<li>${escapeHTML(s)}</li>`).join('')}
+            </ul>
+          </section>`;
+        }
+      }
+
+      const expHTML = experience ? `<section class="mt-6"><h2 class="text-lg font-semibold accent-border border-b pb-1 accent">Experience</h2><ul class="list-disc ml-6">${experience.split(/\n+/).map(line => `<li>${escapeHTML(line)}</li>`).join('')}</ul></section>` : '';
+
+      const eduHTML = education ? `<section class="mt-6"><h2 class="text-lg font-semibold accent-border border-b pb-1 accent">Education</h2><ul class="list-disc ml-6">${education.split(/\n+/).map(line => `<li>${escapeHTML(line)}</li>`).join('')}</ul></section>` : '';
+
+      $('resumeRoot').innerHTML = `${header}${summaryHTML}${skillsHTML}${expHTML}${eduHTML}`;
+    }
+
+    function bindInputs() {
+      ['name','title','email','phone','location','summary','skills','experience','education']
+        .forEach(key => {
+          $(key).addEventListener('input', e => {
+            state[key] = e.target.value;
+            render();
+          });
+        });
+
+      $('photo').addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = evt => {
+          state.photo = evt.target.result;
+          render();
+        };
+        reader.readAsDataURL(file);
+      });
+
+      $('accentColor').addEventListener('input', e => {
+        document.documentElement.style.setProperty('--accent-color', e.target.value);
+        render();
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      bindInputs();
+      render();
+      $('btnPrint').onclick = () => window.print();
+    });
+  </script>
+
+  <style>
+    .input { width: 100%; border: 1px solid rgb(226,232,240); border-radius: 0.75rem; padding: 0.5rem 0.75rem; }
+    .input:focus { outline: none; box-shadow: 0 0 0 3px rgba(14,165,233,.25) }
+    .prose h2 { font-weight: 600; }
+  </style>
+
+</body>
+</html>
